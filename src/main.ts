@@ -51,8 +51,15 @@ const intialRadioButton = radioButtons.find(
 )!
 intialRadioButton.element.checked = true
 
-canvas.addEventListener('mousedown', () => {
+canvas.addEventListener('mousedown', (e) => {
   mouseDown = true
+
+  const pixelSize = canvas.offsetWidth / WIDTH
+  const x = Math.floor(e.offsetX / pixelSize)
+  const y = Math.floor(e.offsetY / pixelSize)
+  const index = toIndex({ x, y })
+
+  queuePixel(index, selectedPixel)
 })
 canvas.addEventListener('mouseup', () => {
   mouseDown = false
