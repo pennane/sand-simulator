@@ -31,7 +31,6 @@ export const draw = (grid: Pixel[]) => {
   canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
   while (queuedPixels.length > 0) {
     const queued = queuedPixels.shift()!
-    if (grid[queued.index]) continue
     grid[queued.index] = queued.pixel
   }
 
