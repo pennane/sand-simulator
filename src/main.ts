@@ -57,6 +57,9 @@ canvas.addEventListener('mousedown', () => {
 canvas.addEventListener('mouseup', () => {
   mouseDown = false
 })
+canvas.addEventListener('mouseleave', () => {
+  mouseDown = false
+})
 
 canvas.addEventListener('mousemove', (e) => {
   if (!mouseDown) return
