@@ -20,6 +20,28 @@ export abstract class Element {
   abstract color(): Color
 }
 
+interface ThermallyConductive {
+  receiveHeat: (
+    temperatureChange: number,
+    grid: Element[],
+    currentIndex: number
+  ) => void
+}
+
+interface Extinguisher {
+  suppressFire: () => number
+}
+
+const isThermallyConductive = <T extends {}>(
+  e: T
+): e is ThermallyConductive & T => {
+  return 'receiveHeat' in e
+}
+
+const isExtinguisher = <T extends {}>(e: T): e is Extinguisher & T => {
+  return 'suppressFire' in e
+}
+
 abstract class ImmovableSolid extends Element {
   next() {}
 }
@@ -151,24 +173,45 @@ export class Stone extends ImmovableSolid {
   }
 }
 
-export class Water extends Liquid {
+export class Water extends Liquid implements Extinguisher, ThermallyConductive {
   public density: number = 10
+  public temperature: number = 10
   color(): Color {
     return [0, 0, 200]
   }
-}
-
-export class Oil extends Liquid {
-  public density: number = 5
-  public fluidity: number = 3
-  color(): Color {
-    return [90, 0, 90]
+  suppressFire() {
+    return 30
+  }
+  receiveHeat(change: number, grid: Element[], currentPosition: number) {
+    this.temperature += change
+    if (this.temperature >= 100) {
+      grid[currentPosition] = elementFactory(ElementType.WaterVapor)
+    }
   }
 }
 
-export class Ant extends LivingBeing {
+export class Oil extends Liquid implements ThermallyConductive {
+  public density: number = 5
+  public fluidity: number = 3
+  public temperature: number = 10
+  color(): Color {
+    return [90, 0, 90]
+  }
+  suppressFire() {
+    return 10
+  }
+  receiveHeat(change: number, grid: Element[], currentPosition: number) {
+    this.temperature += change
+    if (this.temperature >= 100) {
+      grid[currentPosition] = elementFactory(ElementType.Fire)
+    }
+  }
+}
+
+export class Ant extends LivingBeing implements ThermallyConductive {
   private diggingTunnel: boolean = false
   private inTunnel: boolean = false
+  private temperature = 30
 
   next(grid: Element[], index: number): void {
     const belowIndex = below(index)
@@ -182,6 +225,10 @@ export class Ant extends LivingBeing {
       grid[belowIndex] instanceof Liquid ||
       grid[above(index)] instanceof Liquid
     ) {
+      grid[index] = elementFactory(ElementType.Air)
+    }
+
+    if (around(index).every((i) => grid[i] instanceof Ant)) {
       grid[index] = elementFactory(ElementType.Air)
     }
 
@@ -263,6 +310,16 @@ export class Ant extends LivingBeing {
   color(): Color {
     return [242, 84, 89]
   }
+
+  receiveHeat(change: number, grid: Element[], currentIndex: number) {
+    this.temperature += change
+
+    if (this.temperature > 60) {
+      grid[currentIndex] = elementFactory(
+        this.inTunnel ? ElementType.Tunnel : ElementType.Air
+      )
+    }
+  }
 }
 
 export class Tunnel extends ImmovableSolid {
@@ -271,9 +328,75 @@ export class Tunnel extends ImmovableSolid {
   }
 }
 
-export class WaterVapor extends Gas {
+export class WaterVapor
+  extends Gas
+  implements Extinguisher, ThermallyConductive
+{
+  public temperature = 200
   color(): Color {
     return [217, 217, 253]
+  }
+  suppressFire() {
+    return 30
+  }
+
+  next(grid: Element[], index: number): void {
+    this.receiveHeat(-(Math.random() * 2), grid, index)
+    if (this.temperature < 0) return
+
+    super.next(grid, index)
+  }
+
+  receiveHeat(
+    temperatureChange: number,
+    grid: Element[],
+    currentIndex: number
+  ) {
+    this.temperature += temperatureChange
+    if (this.temperature > 200) {
+      this.temperature = 200
+    } else if (this.temperature < 0) {
+      grid[currentIndex] = elementFactory(ElementType.Water)
+      return
+    }
+  }
+}
+
+export class Fire extends MovableSolid {
+  public lifeCount: number = 100
+  color(): Color {
+    return [255, 0, 0]
+  }
+  next(grid: Element[], index: number) {
+    const indicesAround = around(index)
+    const elementsAround = indicesAround.map((i) => [i, grid[i]] as const)
+    const heatUpTargets = elementsAround.filter(([_, element]) =>
+      isThermallyConductive(element)
+    )
+
+    heatUpTargets.forEach(
+      ([i, e]) =>
+        Math.random() > 0.4 &&
+        (e as unknown as ThermallyConductive).receiveHeat(10, grid, i)
+    )
+
+    const extinguishingNeighbors = elementsAround.filter(isExtinguisher)
+    for (const element of extinguishingNeighbors) {
+      this.lifeCount -= element.suppressFire()
+    }
+
+    this.lifeCount -= Math.random() * 5
+    if (this.lifeCount <= 0) {
+      grid[index] = elementFactory(ElementType.Air)
+      return
+    }
+
+    const moveTarget = randomFromArray(
+      indicesAround.filter((i) => isAir(grid, i))
+    )
+
+    if (!moveTarget) return
+    swap(grid, moveTarget, index)
   }
 }
 
@@ -285,7 +408,8 @@ export enum ElementType {
   Ant = 'ant',
   Tunnel = 'tunnel',
   WaterVapor = 'watervapor',
-  Oil = 'oil'
+  Oil = 'oil',
+  Fire = 'fire'
 }
 
 const AIR = new Air()
@@ -295,6 +419,7 @@ const SAND = new Sand()
 const TUNNEL = new Tunnel()
 const WATER_VAPOR = new WaterVapor()
 const OIL = new Oil()
+const FIRE = new Fire()
 
 export const isAir = (grid: Element[], index: number) => grid[index] === AIR
 
@@ -302,11 +427,12 @@ const ELEMENT_FACTORIES: Record<ElementType, () => Element> = {
   [ElementType.Air]: () => AIR,
   [ElementType.Stone]: () => STONE,
   [ElementType.Sand]: () => SAND,
-  [ElementType.Water]: () => WATER,
+  [ElementType.Water]: () => new Water(),
   [ElementType.Ant]: () => new Ant(),
   [ElementType.Tunnel]: () => TUNNEL,
-  [ElementType.WaterVapor]: () => WATER_VAPOR,
-  [ElementType.Oil]: () => OIL
+  [ElementType.WaterVapor]: () => new WaterVapor(),
+  [ElementType.Oil]: () => OIL,
+  [ElementType.Fire]: () => new Fire()
 }
 
 export const elementFactory = (type: ElementType) => {
