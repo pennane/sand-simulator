@@ -1,25 +1,25 @@
-import { WIDTH, HEIGHT, PIXEL_COLOR_MAP, BLACK } from './constants'
+import { WIDTH, HEIGHT } from './constants'
 import { nextState } from './state'
-import { Color, Pixel } from './types'
+import { Element, ElementType, elementFactory } from './elements'
 
 export const canvas = document.createElement('canvas')
-const ctx = canvas.getContext('2d')!
+const ctx = canvas.getContext('2d', { willReadFrequently: true })!
 
 let canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
 
-const queuedPixels: Array<{ pixel: Pixel; index: number }> = []
+const queuedElements: Array<{
+  type: ElementType
+  index: number | 'all'
+  brushSize?: number
+}> = []
 
 canvas.width = WIDTH
 canvas.height = HEIGHT
 
-export const getPixelColor = (pixel: Pixel): Color => {
-  return pixel ? PIXEL_COLOR_MAP[pixel] : BLACK
-}
-
-const drawPixel = (index: number, pixel: Pixel) => {
+const drawPixel = (index: number, type: Element) => {
   const rgbaIndex = index * 4
 
-  const { r, g, b } = getPixelColor(pixel)
+  const [r, g, b] = type.color()
 
   canvasData.data[rgbaIndex + 0] = r
   canvasData.data[rgbaIndex + 1] = g
@@ -27,11 +27,19 @@ const drawPixel = (index: number, pixel: Pixel) => {
   canvasData.data[rgbaIndex + 3] = 255
 }
 
-export const draw = (grid: Pixel[]) => {
+export const draw = (grid: Element[]) => {
   canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
-  while (queuedPixels.length > 0) {
-    const queued = queuedPixels.shift()!
-    grid[queued.index] = queued.pixel
+  while (queuedElements.length > 0) {
+    const queued = queuedElements.shift()!
+    if (queued.index === 'all') {
+      grid = grid.map(() => elementFactory(queued.type))
+    } else {
+      const brushSize = Math.max(Math.min(queued.brushSize || 1, 10), 1)
+      const indices = getIndicesForBrush(queued.index, brushSize)
+      for (const i of indices) {
+        grid[i] = elementFactory(queued.type)
+      }
+    }
   }
 
   for (let i = 0; i < grid.length; i++) {
@@ -39,9 +47,36 @@ export const draw = (grid: Pixel[]) => {
   }
 
   ctx.putImageData(canvasData, 0, 0)
-  setTimeout(() => draw(nextState(grid)), 35)
+  setTimeout(() => draw(nextState(grid)), 15)
 }
 
-export const queuePixel = (index: number, pixel: Pixel) => {
-  queuedPixels.push({ index, pixel })
+export const queueElement = (
+  index: number,
+  type: ElementType,
+  brushSize?: number
+) => {
+  queuedElements.push({ index, type, brushSize })
+}
+
+export const queueFillAll = (type: ElementType) => {
+  queuedElements.push({ index: 'all', type })
+}
+
+function getIndicesForBrush(centerIndex: number, brushSize: number): number[] {
+  if (brushSize <= 1) return [centerIndex]
+  const indices = []
+  const centerX = centerIndex % WIDTH
+  const centerY = Math.floor(centerIndex / WIDTH)
+
+  for (let x = -brushSize; x <= brushSize; x++) {
+    for (let y = -brushSize; y <= brushSize; y++) {
+      const newX = centerX + x
+      const newY = centerY + y
+      if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT) {
+        indices.push(newY * WIDTH + newX)
+      }
+    }
+  }
+
+  return indices
 }

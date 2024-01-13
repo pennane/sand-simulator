@@ -1,5 +1,7 @@
+import { uniq } from 'ramda'
 import { WIDTH, HEIGHT } from './constants'
-import { Pixel, Point } from './types'
+import { Point } from './types'
+import { Element } from './elements'
 
 export const toIndex = (point: Point) => point.y * WIDTH + point.x
 
@@ -49,7 +51,27 @@ export const upRight = (index: number) => {
   return newY < 0 || newX >= WIDTH ? index : newY * WIDTH + newX
 }
 
-export const swap = (grid: Pixel[], a: number, b: number) => {
+export const indicesNextTo = (index: number): number[] => {
+  const indices = uniq([below(index), above(index), left(index), right(index)])
+  return indices
+}
+
+export const around = (index: number): number[] => {
+  const indices = uniq([
+    below(index),
+    above(index),
+    left(index),
+    right(index),
+    downLeft(index),
+    downRight(index),
+    upLeft(index),
+    upRight(index)
+  ])
+
+  return indices
+}
+
+export const swap = (grid: Element[], a: number, b: number) => {
   const temp = grid[a]
   grid[a] = grid[b]
   grid[b] = temp

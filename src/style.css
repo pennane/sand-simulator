@@ -35,7 +35,13 @@ canvas {
   image-rendering: pixelated;
 }
 
-.pixel-selectors {
+#settings-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+#settings-container > div {
   display: flex;
   gap: 0.5rem;
   flex-direction: column;

@@ -1,37 +1,45 @@
-import { DEFAULT_DRAWING_PIXEL, PIXELS, WIDTH } from './constants'
-import { canvas, draw, getPixelColor, queuePixel } from './draw'
+import { DEFAULT_DRAWING_ELEMENT, WIDTH } from './constants'
+import { canvas, draw, queueElement, queueFillAll } from './draw'
+import { ElementType, elementFactory } from './elements'
 import { toIndex } from './grid'
 import { createDefaultGrid } from './state'
 import './style.css'
-import { Pixel } from './types'
 
 const canvasContainer = document.getElementById('canvas-container')!
 const settingsContainer = document.getElementById('settings-container')!
 
 let mouseDown = false
-let selectedPixel: Pixel = DEFAULT_DRAWING_PIXEL
+let selectedElementType: ElementType = DEFAULT_DRAWING_ELEMENT
+let brushSize = 1
 
-const changeSelectedPixelContainer = document.createElement('div')
+const changeSelectedTypeContainer = document.createElement('div')
 
-changeSelectedPixelContainer.classList.add('pixel-selectors')
+changeSelectedTypeContainer.classList.add('pixel-selectors')
 
-const radioButtons: Array<{ pixel: Pixel; element: HTMLInputElement }> = []
+const radioButtons: Array<{ type: ElementType; element: HTMLInputElement }> = []
 
-for (const pixel of PIXELS) {
+for (const type of Object.values(ElementType)) {
+  const instance = elementFactory(type)
+
   const container = document.createElement('div')
   container.classList.add('selector-container')
   const radioButton = document.createElement('input')
   radioButton.type = 'radio'
   const preview = document.createElement('div')
   preview.classList.add('preview')
-  const color = getPixelColor(pixel)
-  preview.style.backgroundColor = `rgb(${color.r},${color.g},${color.b})`
+  const [r, g, b] = instance.color()
+  preview.style.backgroundColor = `rgb(${r},${g},${b})`
 
-  container.appendChild(preview)
+  const text = document.createElement('span')
+  text.textContent = type
+
   container.appendChild(radioButton)
-  changeSelectedPixelContainer.appendChild(container)
+  container.appendChild(preview)
+  container.appendChild(text)
 
-  radioButtons.push({ pixel, element: radioButton })
+  changeSelectedTypeContainer.appendChild(container)
+
+  radioButtons.push({ type, element: radioButton })
 }
 
 for (const radioButton of radioButtons) {
@@ -39,15 +47,15 @@ for (const radioButton of radioButtons) {
     const selected = !!(e.target as any)?.checked
     if (selected) {
       radioButtons
-        .filter((b) => b.pixel !== radioButton.pixel)
+        .filter((b) => b.type !== radioButton.type)
         .forEach((b) => (b.element.checked = false))
-      selectedPixel = radioButton.pixel
+      selectedElementType = radioButton.type
     }
   })
 }
 
 const intialRadioButton = radioButtons.find(
-  (b) => b.pixel === DEFAULT_DRAWING_PIXEL
+  (b) => b.type === DEFAULT_DRAWING_ELEMENT
 )!
 intialRadioButton.element.checked = true
 
@@ -59,7 +67,7 @@ canvas.addEventListener('mousedown', (e) => {
   const y = Math.floor(e.offsetY / pixelSize)
   const index = toIndex({ x, y })
 
-  queuePixel(index, selectedPixel)
+  queueElement(index, selectedElementType)
 })
 canvas.addEventListener('mouseup', () => {
   mouseDown = false
@@ -70,16 +78,39 @@ canvas.addEventListener('mouseleave', () => {
 
 canvas.addEventListener('mousemove', (e) => {
   if (!mouseDown) return
-  console.log(e.offsetX, e.offsetY)
 
   const pixelSize = canvas.offsetWidth / WIDTH
   const x = Math.floor(e.offsetX / pixelSize)
   const y = Math.floor(e.offsetY / pixelSize)
   const index = toIndex({ x, y })
 
-  queuePixel(index, selectedPixel)
+  queueElement(index, selectedElementType, brushSize)
 })
 
+const otherControls = document.createElement('div')
+
+const fillButtonHeading = document.createElement('h3')
+fillButtonHeading.textContent = 'Fill everything'
+
+const fillButton = document.createElement('button')
+fillButton.textContent = 'fill'
+fillButton.addEventListener('click', () => queueFillAll(selectedElementType))
+
+const brushSizeHeading = document.createElement('h3')
+brushSizeHeading.textContent = 'brush size'
+const brushSizeInput = document.createElement('input')
+brushSizeInput.type = 'number'
+brushSizeInput.value = '1'
+brushSizeInput.addEventListener('change', (e) => {
+  brushSize = parseInt((e.target as unknown as any).value || 1)
+})
+
+otherControls.appendChild(fillButtonHeading)
+otherControls.appendChild(fillButton)
+otherControls.appendChild(brushSizeHeading)
+otherControls.appendChild(brushSizeInput)
+
 canvasContainer.appendChild(canvas)
-settingsContainer.appendChild(changeSelectedPixelContainer)
+settingsContainer.appendChild(changeSelectedTypeContainer)
+settingsContainer.appendChild(otherControls)
 draw(createDefaultGrid())
