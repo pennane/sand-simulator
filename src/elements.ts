@@ -450,12 +450,9 @@ export enum ElementType {
 
 const AIR = new Air()
 const STONE = new Stone()
-const WATER = new Water()
 const SAND = new Sand()
 const TUNNEL = new Tunnel()
-const WATER_VAPOR = new WaterVapor()
 const OIL = new Oil()
-const FIRE = new Fire()
 
 export const isAir = (grid: Element[], index: number) => grid[index] === AIR
 
