@@ -1,3 +1,4 @@
+import { HEIGHT, WIDTH } from './constants'
 import {
   above,
   around,
@@ -8,6 +9,7 @@ import {
   left,
   right,
   swap,
+  toIndex,
   upLeft,
   upRight
 } from './grid'
@@ -402,20 +404,23 @@ export class Fire extends MovableSolid {
 
 export class Bomb extends MovableSolid {
   fallLastFrame: boolean = false
+  power = 4
   color(): Color {
     return [50, 80, 50]
   }
   private explode(grid: Element[], index: number) {
-    const indicesAround = around(index)
-    for (const index of indicesAround) {
-      if (grid[index] instanceof ImmovableSolid) {
-        console.log('no chili explosion')
+    const testIndices = this.getBombIndices(index)
 
+    const indicesToBlow = new Set([index])
+    for (const index of testIndices) {
+      if (grid[index] instanceof ImmovableSolid) {
         continue
       }
+      indicesToBlow.add(index)
+    }
+    for (const index of indicesToBlow.values()) {
       grid[index] = elementFactory(ElementType.Fire)
     }
-    grid[index] = elementFactory(ElementType.Fire)
   }
 
   next(grid: Element[], index: number): void {
@@ -436,8 +441,33 @@ export class Bomb extends MovableSolid {
       }
       this.fallLastFrame = false
     }
+
     super.next(grid, index)
   }
+
+  getBombIndices(centerIndex: number): number[] {
+    if (this.power <= 1) return [centerIndex]
+    const indices: number[] = []
+    const centerX = centerIndex % WIDTH
+    const centerY = Math.floor(centerIndex / WIDTH)
+
+    for (let i = 0; i < WIDTH; i++) {
+      for (let j = 0; j < HEIGHT; j++) {
+        const x = i - centerX
+        const y = j - centerY
+        const distance = Math.sqrt(x * x + y * y)
+
+        if (distance <= this.power) {
+          indices.push(toIndex({ x: i, y: j }))
+        }
+      }
+    }
+    return indices
+  }
+}
+
+export class AtomBomb extends Bomb {
+  power: number = 40
 }
 
 export enum ElementType {
@@ -450,7 +480,8 @@ export enum ElementType {
   WaterVapor = 'watervapor',
   Oil = 'oil',
   Fire = 'fire',
-  Bomb = 'bomb'
+  Bomb = 'bomb',
+  AtomBomb = 'atombomb'
 }
 
 const AIR = new Air()
@@ -471,7 +502,8 @@ const ELEMENT_FACTORIES: Record<ElementType, () => Element> = {
   [ElementType.WaterVapor]: () => new WaterVapor(),
   [ElementType.Oil]: () => OIL,
   [ElementType.Fire]: () => new Fire(),
-  [ElementType.Bomb]: () => new Bomb()
+  [ElementType.Bomb]: () => new Bomb(),
+  [ElementType.AtomBomb]: () => new AtomBomb()
 }
 
 export const elementFactory = (type: ElementType) => {

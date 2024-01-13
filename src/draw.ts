@@ -70,7 +70,10 @@ export const queueFillAll = (type: ElementType) => {
   queuedElements.push({ index: 'all', type })
 }
 
-function getIndicesForBrush(centerIndex: number, brushSize: number): number[] {
+const getIndicesForBrush = (
+  centerIndex: number,
+  brushSize: number
+): number[] => {
   if (brushSize <= 1) return [centerIndex]
   const indices = []
   const centerX = centerIndex % WIDTH
