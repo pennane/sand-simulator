@@ -400,6 +400,41 @@ export class Fire extends MovableSolid {
   }
 }
 
+export class Bomb extends MovableSolid {
+  fallLastFrame: boolean = false
+  color(): Color {
+    return [50, 80, 50]
+  }
+  private explode(grid: Element[], index: number) {
+    const indicesAround = around(index)
+    for (const index of indicesAround) {
+      grid[index] = elementFactory(ElementType.Fire)
+    }
+    grid[index] = elementFactory(ElementType.Fire)
+  }
+
+  next(grid: Element[], index: number): void {
+    const belowIndex = below(index)
+    const indicesAround = around(index)
+    const fireAround = indicesAround.some((i) => grid[i] instanceof Fire)
+    if (fireAround) {
+      this.explode(grid, index)
+      return
+    }
+
+    if (isAir(grid, belowIndex)) {
+      this.fallLastFrame = true
+    } else {
+      if (this.fallLastFrame && !(grid[belowIndex] instanceof Bomb)) {
+        this.explode(grid, index)
+        return
+      }
+      this.fallLastFrame = false
+    }
+    super.next(grid, index)
+  }
+}
+
 export enum ElementType {
   Air = 'air',
   Stone = 'stone',
@@ -409,7 +444,8 @@ export enum ElementType {
   Tunnel = 'tunnel',
   WaterVapor = 'watervapor',
   Oil = 'oil',
-  Fire = 'fire'
+  Fire = 'fire',
+  Bomb = 'bomb'
 }
 
 const AIR = new Air()
@@ -432,7 +468,8 @@ const ELEMENT_FACTORIES: Record<ElementType, () => Element> = {
   [ElementType.Tunnel]: () => TUNNEL,
   [ElementType.WaterVapor]: () => new WaterVapor(),
   [ElementType.Oil]: () => OIL,
-  [ElementType.Fire]: () => new Fire()
+  [ElementType.Fire]: () => new Fire(),
+  [ElementType.Bomb]: () => new Bomb()
 }
 
 export const elementFactory = (type: ElementType) => {
