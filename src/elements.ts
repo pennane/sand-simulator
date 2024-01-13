@@ -88,24 +88,44 @@ abstract class Gas extends Element {
 
 abstract class Liquid extends Element {
   public density = 10
+  public fluidity = 5
 
   next(grid: Element[], index: number): void {
     const belowIndex = below(index)
-    const elementBelow = grid[belowIndex]
 
-    if (
-      isAir(grid, belowIndex) ||
-      (elementBelow instanceof Liquid && elementBelow.density < this.density)
-    ) {
+    if (isAir(grid, belowIndex)) {
       swap(grid, index, belowIndex)
       return
     }
 
-    const indices = [left(index), right(index)].filter((i) => isAir(grid, i))
-    if (indices.length > 0) {
-      swap(grid, index, randomFromArray(indices))
-      return
+    const liquidIndex = [below, downLeft, downRight, left, right]
+      .map((f) => f(index))
+      .find((i) => {
+        const e = grid[i]
+        if (e instanceof Liquid) {
+          return e.density < this.density
+        }
+        return false
+      })
+    if (liquidIndex) {
+      swap(grid, liquidIndex, index)
     }
+
+    const dirFunc = randomFromArray(
+      [left, right].filter((f) => isAir(grid, f(index)))
+    )
+
+    if (!dirFunc) return
+    let testedSuccesfully = dirFunc(index)
+    for (let i = 1; i < this.fluidity; i++) {
+      const nextTexted = dirFunc(testedSuccesfully)
+      if (isAir(grid, nextTexted)) {
+        testedSuccesfully = nextTexted
+      } else {
+        break
+      }
+    }
+    swap(grid, index, testedSuccesfully)
   }
 }
 
@@ -132,8 +152,17 @@ export class Stone extends ImmovableSolid {
 }
 
 export class Water extends Liquid {
+  public density: number = 10
   color(): Color {
     return [0, 0, 200]
+  }
+}
+
+export class Oil extends Liquid {
+  public density: number = 5
+  public fluidity: number = 3
+  color(): Color {
+    return [90, 0, 90]
   }
 }
 
@@ -148,6 +177,15 @@ export class Ant extends LivingBeing {
       swap(grid, index, belowIndex)
       return
     }
+
+    if (
+      grid[belowIndex] instanceof Liquid ||
+      grid[above(index)] instanceof Liquid
+    ) {
+      grid[index] = elementFactory(ElementType.Air)
+    }
+
+    if (Math.random() > 0.1) return
 
     if (
       !this.inTunnel &&
@@ -246,7 +284,8 @@ export enum ElementType {
   Water = 'water',
   Ant = 'ant',
   Tunnel = 'tunnel',
-  WaterVapor = 'watervapor'
+  WaterVapor = 'watervapor',
+  Oil = 'oil'
 }
 
 const AIR = new Air()
@@ -255,6 +294,7 @@ const WATER = new Water()
 const SAND = new Sand()
 const TUNNEL = new Tunnel()
 const WATER_VAPOR = new WaterVapor()
+const OIL = new Oil()
 
 export const isAir = (grid: Element[], index: number) => grid[index] === AIR
 
@@ -265,7 +305,8 @@ const ELEMENT_FACTORIES: Record<ElementType, () => Element> = {
   [ElementType.Water]: () => WATER,
   [ElementType.Ant]: () => new Ant(),
   [ElementType.Tunnel]: () => TUNNEL,
-  [ElementType.WaterVapor]: () => WATER_VAPOR
+  [ElementType.WaterVapor]: () => WATER_VAPOR,
+  [ElementType.Oil]: () => OIL
 }
 
 export const elementFactory = (type: ElementType) => {

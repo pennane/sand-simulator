@@ -5,6 +5,10 @@ import { Element, ElementType, elementFactory } from './elements'
 export const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d', { willReadFrequently: true })!
 
+export const MIN_BRUSH_SIZE = 1
+export const MAX_BRUSH_SIZE = 20
+export const DEFAULT_BRUSH_SIZE = 2
+
 let canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
 
 const queuedElements: Array<{
@@ -34,7 +38,10 @@ export const draw = (grid: Element[]) => {
     if (queued.index === 'all') {
       grid = grid.map(() => elementFactory(queued.type))
     } else {
-      const brushSize = Math.max(Math.min(queued.brushSize || 1, 10), 1)
+      const brushSize = Math.max(
+        Math.min(queued.brushSize || DEFAULT_BRUSH_SIZE, MAX_BRUSH_SIZE),
+        MIN_BRUSH_SIZE
+      )
       const indices = getIndicesForBrush(queued.index, brushSize)
       for (const i of indices) {
         grid[i] = elementFactory(queued.type)
@@ -47,7 +54,8 @@ export const draw = (grid: Element[]) => {
   }
 
   ctx.putImageData(canvasData, 0, 0)
-  setTimeout(() => draw(nextState(grid)), 15)
+  const next = nextState(grid)
+  requestAnimationFrame(() => draw(next))
 }
 
 export const queueElement = (

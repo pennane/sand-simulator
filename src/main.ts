@@ -1,5 +1,13 @@
 import { DEFAULT_DRAWING_ELEMENT, WIDTH } from './constants'
-import { canvas, draw, queueElement, queueFillAll } from './draw'
+import {
+  DEFAULT_BRUSH_SIZE,
+  MAX_BRUSH_SIZE,
+  MIN_BRUSH_SIZE,
+  canvas,
+  draw,
+  queueElement,
+  queueFillAll
+} from './draw'
 import { ElementType, elementFactory } from './elements'
 import { toIndex } from './grid'
 import { createDefaultGrid } from './state'
@@ -10,7 +18,7 @@ const settingsContainer = document.getElementById('settings-container')!
 
 let mouseDown = false
 let selectedElementType: ElementType = DEFAULT_DRAWING_ELEMENT
-let brushSize = 1
+let brushSize = DEFAULT_BRUSH_SIZE
 
 const changeSelectedTypeContainer = document.createElement('div')
 
@@ -67,7 +75,7 @@ canvas.addEventListener('mousedown', (e) => {
   const y = Math.floor(e.offsetY / pixelSize)
   const index = toIndex({ x, y })
 
-  queueElement(index, selectedElementType)
+  queueElement(index, selectedElementType, brushSize)
 })
 canvas.addEventListener('mouseup', () => {
   mouseDown = false
@@ -100,7 +108,10 @@ const brushSizeHeading = document.createElement('h3')
 brushSizeHeading.textContent = 'brush size'
 const brushSizeInput = document.createElement('input')
 brushSizeInput.type = 'number'
-brushSizeInput.value = '1'
+brushSizeInput.value = String(brushSize)
+brushSizeInput.max = String(MAX_BRUSH_SIZE)
+brushSizeInput.min = String(MIN_BRUSH_SIZE)
+
 brushSizeInput.addEventListener('change', (e) => {
   brushSize = parseInt((e.target as unknown as any).value || 1)
 })
