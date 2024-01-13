@@ -7,7 +7,7 @@ const ctx = canvas.getContext('2d', { willReadFrequently: true })!
 
 export const MIN_BRUSH_SIZE = 1
 export const MAX_BRUSH_SIZE = 20
-export const DEFAULT_BRUSH_SIZE = 2
+export const DEFAULT_BRUSH_SIZE = 1
 
 let canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
 
