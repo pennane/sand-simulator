@@ -12,8 +12,5 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   },
-  "dependencies": {
-    "@types/ramda": "^0.29.9",
-    "ramda": "^0.29.1"
-  }
+  "dependencies": {}
 }

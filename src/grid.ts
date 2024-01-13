@@ -1,7 +1,7 @@
-import { uniq } from 'ramda'
 import { WIDTH, HEIGHT } from './constants'
 import { Point } from './types'
-import { Element } from './elements'
+import { Material } from './material/materials'
+import { uniq } from './lib'
 
 export const toIndex = (point: Point) => point.y * WIDTH + point.x
 
@@ -71,7 +71,7 @@ export const around = (index: number): number[] => {
   return indices
 }
 
-export const swap = (grid: Element[], a: number, b: number) => {
+export const swap = (grid: Material[], a: number, b: number) => {
   const temp = grid[a]
   grid[a] = grid[b]
   grid[b] = temp

@@ -5,11 +5,11 @@ import {
   MIN_BRUSH_SIZE,
   canvas,
   draw,
-  queueElement,
+  queueMaterial,
   queueFillAll
 } from './draw'
-import { ElementType, elementFactory } from './elements'
 import { toIndex } from './grid'
+import { MaterialType, factory } from './material/materialType'
 import { createDefaultGrid } from './state'
 import './style.css'
 
@@ -17,17 +17,18 @@ const canvasContainer = document.getElementById('canvas-container')!
 const settingsContainer = document.getElementById('settings-container')!
 
 let mouseDown = false
-let selectedElementType: ElementType = DEFAULT_DRAWING_ELEMENT
+let selectedMaterialType: MaterialType = DEFAULT_DRAWING_ELEMENT
 let brushSize = DEFAULT_BRUSH_SIZE
 
 const changeSelectedTypeContainer = document.createElement('div')
 
 changeSelectedTypeContainer.classList.add('pixel-selectors')
 
-const radioButtons: Array<{ type: ElementType; element: HTMLInputElement }> = []
+const radioButtons: Array<{ type: MaterialType; element: HTMLInputElement }> =
+  []
 
-for (const type of Object.values(ElementType)) {
-  const instance = elementFactory(type)
+for (const type of Object.values(MaterialType)) {
+  const instance = factory(type)
 
   const container = document.createElement('div')
   container.classList.add('selector-container')
@@ -57,7 +58,7 @@ for (const radioButton of radioButtons) {
       radioButtons
         .filter((b) => b.type !== radioButton.type)
         .forEach((b) => (b.element.checked = false))
-      selectedElementType = radioButton.type
+      selectedMaterialType = radioButton.type
     }
   })
 }
@@ -75,7 +76,7 @@ canvas.addEventListener('mousedown', (e) => {
   const y = Math.floor(e.offsetY / pixelSize)
   const index = toIndex({ x, y })
 
-  queueElement(index, selectedElementType, brushSize)
+  queueMaterial(index, selectedMaterialType, brushSize)
 })
 canvas.addEventListener('mouseup', () => {
   mouseDown = false
@@ -92,7 +93,7 @@ canvas.addEventListener('mousemove', (e) => {
   const y = Math.floor(e.offsetY / pixelSize)
   const index = toIndex({ x, y })
 
-  queueElement(index, selectedElementType, brushSize)
+  queueMaterial(index, selectedMaterialType, brushSize)
 })
 
 const otherControls = document.createElement('div')
@@ -102,7 +103,7 @@ fillButtonHeading.textContent = 'Fill everything'
 
 const fillButton = document.createElement('button')
 fillButton.textContent = 'fill'
-fillButton.addEventListener('click', () => queueFillAll(selectedElementType))
+fillButton.addEventListener('click', () => queueFillAll(selectedMaterialType))
 
 const brushSizeHeading = document.createElement('h3')
 brushSizeHeading.textContent = 'brush size'

@@ -1,6 +1,7 @@
+import { Material } from './material/Material'
 import { WIDTH, HEIGHT } from './constants'
+import { MaterialType, factory } from './material/materialType'
 import { nextState } from './state'
-import { Element, ElementType, elementFactory } from './elements'
 
 export const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d', { willReadFrequently: true })!
@@ -11,8 +12,8 @@ export const DEFAULT_BRUSH_SIZE = 1
 
 let canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
 
-const queuedElements: Array<{
-  type: ElementType
+const queuedMaterials: Array<{
+  type: MaterialType
   index: number | 'all'
   brushSize?: number
 }> = []
@@ -20,7 +21,7 @@ const queuedElements: Array<{
 canvas.width = WIDTH
 canvas.height = HEIGHT
 
-const drawPixel = (index: number, type: Element) => {
+const drawPixel = (index: number, type: Material) => {
   const rgbaIndex = index * 4
 
   const [r, g, b] = type.color()
@@ -31,12 +32,12 @@ const drawPixel = (index: number, type: Element) => {
   canvasData.data[rgbaIndex + 3] = 255
 }
 
-export const draw = (grid: Element[]) => {
+export const draw = (grid: Material[]) => {
   canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
-  while (queuedElements.length > 0) {
-    const queued = queuedElements.shift()!
+  while (queuedMaterials.length > 0) {
+    const queued = queuedMaterials.shift()!
     if (queued.index === 'all') {
-      grid = grid.map(() => elementFactory(queued.type))
+      grid = grid.map(() => factory(queued.type))
     } else {
       const brushSize = Math.max(
         Math.min(queued.brushSize || DEFAULT_BRUSH_SIZE, MAX_BRUSH_SIZE),
@@ -44,7 +45,7 @@ export const draw = (grid: Element[]) => {
       )
       const indices = getIndicesForBrush(queued.index, brushSize)
       for (const i of indices) {
-        grid[i] = elementFactory(queued.type)
+        grid[i] = factory(queued.type)
       }
     }
   }
@@ -58,16 +59,16 @@ export const draw = (grid: Element[]) => {
   requestAnimationFrame(() => draw(next))
 }
 
-export const queueElement = (
+export const queueMaterial = (
   index: number,
-  type: ElementType,
+  type: MaterialType,
   brushSize?: number
 ) => {
-  queuedElements.push({ index, type, brushSize })
+  queuedMaterials.push({ index, type, brushSize })
 }
 
-export const queueFillAll = (type: ElementType) => {
-  queuedElements.push({ index: 'all', type })
+export const queueFillAll = (type: MaterialType) => {
+  queuedMaterials.push({ index: 'all', type })
 }
 
 const getIndicesForBrush = (
