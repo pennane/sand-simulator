@@ -408,6 +408,11 @@ export class Bomb extends MovableSolid {
   private explode(grid: Element[], index: number) {
     const indicesAround = around(index)
     for (const index of indicesAround) {
+      if (grid[index] instanceof ImmovableSolid) {
+        console.log('no chili explosion')
+
+        continue
+      }
       grid[index] = elementFactory(ElementType.Fire)
     }
     grid[index] = elementFactory(ElementType.Fire)
