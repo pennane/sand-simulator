@@ -1,7 +1,6 @@
 import {
   MovableSolid,
   ImmovableSolid,
-  Material,
   isThermallyConductive
 } from '../Material'
 
@@ -15,7 +14,7 @@ export class Bomb extends MovableSolid {
   fallLastFrame: boolean = false
   power = 4
   color(): Color {
-    return [50, 80, 50]
+    return [14, 54, 21]
   }
   private explode(grid: Grid, index: number) {
     const testIndices = this.getBombIndices(index)
@@ -33,7 +32,7 @@ export class Bomb extends MovableSolid {
         element.explode(grid, toBlowIndex)
         continue
       }
-      if (isThermallyConductive(element)) {
+      if (isThermallyConductive(element) && Math.random() > 0.1) {
         element.receiveHeat(1000, grid, toBlowIndex)
         continue
       }
