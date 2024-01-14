@@ -22,7 +22,7 @@ export class Ant extends LivingBeing implements ThermallyConductive {
 
     if (
       grid.get(Grid.aboveIndex(index)) instanceof Liquid ||
-      grid.get(Grid.aboveIndex(index)) instanceof Liquid
+      grid.get(Grid.belowIndex(index)) instanceof Liquid
     ) {
       grid.replaceWith(index, MaterialType.Air)
     }
