@@ -8,7 +8,7 @@ import {
 import { MaterialType } from '../materialType'
 import { Color } from '../../types'
 import { Air } from './Air'
-import { Fire } from './Fire'
+
 import { Grid, HEIGHT, WIDTH } from '../../grid/grid'
 
 export class Bomb extends MovableSolid {
@@ -27,32 +27,29 @@ export class Bomb extends MovableSolid {
       }
       indicesToBlow.add(index)
     }
-    for (const index of indicesToBlow.values()) {
-      const element = grid.get(index)
-      if (isThermallyConductive(element)) {
-        element.receiveHeat(1000, grid, index)
+    for (const toBlowIndex of indicesToBlow.values()) {
+      const element = grid.get(toBlowIndex)
+      if (index !== toBlowIndex && element instanceof Bomb) {
+        element.explode(grid, toBlowIndex)
         continue
       }
-      grid.replaceWith(index, MaterialType.Fire)
+      if (isThermallyConductive(element)) {
+        element.receiveHeat(1000, grid, toBlowIndex)
+        continue
+      }
+      grid.replaceWith(toBlowIndex, MaterialType.Fire)
     }
   }
 
   next(grid: Grid, index: number): void {
-    const fireAround = Grid.indicesAround(index).some(
-      (i) => grid.get(i) instanceof Fire
-    )
-    if (fireAround) {
-      this.explode(grid, index)
-      return
-    }
+    const [_, belowElement] = grid.below(index)
 
-    const below = grid.below(index)
-
-    if (below instanceof Air) {
+    if (belowElement instanceof Air) {
       this.fallLastFrame = true
     } else {
-      if (this.fallLastFrame && !(below instanceof Bomb)) {
+      if (this.fallLastFrame && !(belowElement instanceof Bomb)) {
         this.explode(grid, index)
+
         return
       }
       this.fallLastFrame = false

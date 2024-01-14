@@ -69,35 +69,43 @@ export class Grid {
   }
 
   below(index: number) {
-    return this.grid[Grid.belowIndex(index)]
+    const i = Grid.belowIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   above(index: number) {
-    return this.grid[Grid.aboveIndex(index)]
+    const i = Grid.aboveIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   left(index: number) {
-    return this.grid[Grid.leftIndex(index)]
+    const i = Grid.leftIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   right(index: number) {
-    return this.grid[Grid.rightIndex(index)]
+    const i = Grid.rightIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   downLeft(index: number) {
-    return this.grid[Grid.downLeftIndex(index)]
+    const i = Grid.downLeftIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   downRight(index: number) {
-    return this.grid[Grid.downRightIndex(index)]
+    const i = Grid.downRightIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   upLeft(index: number) {
-    return this.grid[Grid.upLeftIndex(index)]
+    const i = Grid.upLeftIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   upRight(index: number) {
-    return this.grid[Grid.upRighIndex(index)]
+    const i = Grid.upRighIndex(index)
+    return [i, this.grid[i]] as const
   }
 
   nextTo(index: number) {
@@ -107,7 +115,7 @@ export class Grid {
       Grid.leftIndex(index),
       Grid.rightIndex(index)
     ])
-    return indices.map((i) => this.get(i))
+    return indices.map((i) => [i, this.get(i)] as const)
   }
 
   around(index: number) {
@@ -121,7 +129,7 @@ export class Grid {
       Grid.upLeftIndex(index),
       Grid.upRighIndex(index)
     ])
-    return indices.map((i) => this.get(i))
+    return indices.map((i) => [i, this.get(i)] as const)
   }
 
   static createEmptyGrid() {

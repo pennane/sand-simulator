@@ -38,14 +38,14 @@ export abstract class ImmovableSolid extends Material {
 export abstract class MovableSolid extends Material {
   public density = 20
   next(grid: Grid, index: number): void {
-    const elementBelow = grid.below(index)
+    const [belowIndex, elementBelow] = grid.below(index)
     if (
       elementBelow instanceof Air ||
       ('density' in elementBelow &&
         typeof elementBelow.density === 'number' &&
         elementBelow.density < this.density)
     ) {
-      grid.swap(index, Grid.belowIndex(index))
+      grid.swap(index, belowIndex)
       return
     }
 
