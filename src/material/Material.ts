@@ -4,11 +4,7 @@ import { Color } from '../types'
 import { Grid } from '../grid/grid'
 
 export interface ThermallyConductive {
-  receiveHeat: (
-    temperatureChange: number,
-    grid: Grid,
-    currentIndex: number
-  ) => void
+  receiveHeat: (temperatureChange: number, grid: Grid, index: number) => void
 }
 
 export interface Extinguisher {

@@ -6,6 +6,7 @@ import { Bomb } from './materials/Bomb'
 import { Dirt } from './materials/Dirt'
 import { Fire } from './materials/Fire'
 import { Grass } from './materials/Grass'
+import { Lava } from './materials/Lava'
 import { Mud } from './materials/Mud'
 import { Oil } from './materials/Oil'
 import { Sand } from './materials/Sand'
@@ -30,7 +31,8 @@ export enum MaterialType {
   Grass = 'grass',
   Dirt = 'dirt',
   Mud = 'mud',
-  Wood = 'wood'
+  Wood = 'wood',
+  Lava = 'lava'
 }
 
 const AIR = new Air()
@@ -41,6 +43,7 @@ const OIL = new Oil()
 const GRASS = new Grass()
 const DIRT = new Dirt()
 const MUD = new Mud()
+const LAVA = new Lava()
 
 const ELEMENT_FACTORIES: Record<MaterialType, () => Material> = {
   [MaterialType.Air]: () => AIR,
@@ -57,7 +60,8 @@ const ELEMENT_FACTORIES: Record<MaterialType, () => Material> = {
   [MaterialType.Grass]: () => GRASS,
   [MaterialType.Dirt]: () => DIRT,
   [MaterialType.Mud]: () => MUD,
-  [MaterialType.Wood]: () => new Wood()
+  [MaterialType.Wood]: () => new Wood(),
+  [MaterialType.Lava]: () => LAVA
 }
 export const factory = (type: MaterialType) => {
   return ELEMENT_FACTORIES[type]()
