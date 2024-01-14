@@ -1,120 +1,116 @@
-import { LivingBeing, ThermallyConductive, Material, Liquid } from '../Material'
-import {
-  below,
-  above,
-  around,
-  indicesNextTo,
-  left,
-  right,
-  upLeft,
-  upRight,
-  downLeft,
-  downRight,
-  swap
-} from '../../grid'
 import { randomFromArray } from '../../lib'
-import { MaterialType, factory } from '../materialType'
+import { MaterialType } from '../materialType'
 import { Color } from '../../types'
 import { Air } from './Air'
 import { Sand } from './Sand'
 import { Tunnel } from './Tunnel'
+import { Grid } from '../../grid/grid'
+import { LivingBeing, ThermallyConductive, Liquid } from '../Material'
 
 export class Ant extends LivingBeing implements ThermallyConductive {
   private diggingTunnel: boolean = false
   private inTunnel: boolean = false
   private temperature = 30
 
-  next(grid: Material[], index: number): void {
-    const belowIndex = below(index)
+  next(grid: Grid, index: number): void {
+    const belowIndex = Grid.belowIndex(index)
 
-    if (grid[belowIndex] instanceof Air) {
-      swap(grid, index, belowIndex)
+    if (grid.get(belowIndex) instanceof Air) {
+      grid.swap(index, belowIndex)
       return
     }
 
     if (
-      grid[belowIndex] instanceof Liquid ||
-      grid[above(index)] instanceof Liquid
+      grid.get(Grid.aboveIndex(index)) instanceof Liquid ||
+      grid.get(Grid.aboveIndex(index)) instanceof Liquid
     ) {
-      grid[index] = factory(MaterialType.Air)
+      grid.replaceWith(index, MaterialType.Air)
     }
 
-    if (around(index).every((i) => grid[i] instanceof Ant)) {
-      grid[index] = factory(MaterialType.Air)
+    if (Grid.indicesAround(index).every((i) => grid.get(i) instanceof Ant)) {
+      grid.replaceWith(index, MaterialType.Air)
     }
 
     if (Math.random() > 0.1) return
 
     if (
       !this.inTunnel &&
-      grid[belowIndex] instanceof Tunnel &&
+      grid.get(belowIndex) instanceof Tunnel &&
       Math.random() > 0.3
     ) {
-      grid[belowIndex] = grid[index]
-      grid[index] = factory(MaterialType.Air)
+      grid.replaceWith(belowIndex, grid.get(index))
+      grid.replaceWith(index, MaterialType.Air)
       this.inTunnel = true
       return
     }
 
-    const twoBelowIndex = below(belowIndex)
+    const twoBelowIndex = Grid.belowIndex(belowIndex)
     if (
       !this.diggingTunnel &&
       !this.inTunnel &&
-      grid[twoBelowIndex] instanceof Sand &&
-      around(twoBelowIndex).every((i) => grid[i] instanceof Sand) &&
+      grid.get(twoBelowIndex) instanceof Sand &&
+      Grid.indicesAround(twoBelowIndex).every(
+        (i) => grid.get(i) instanceof Sand
+      ) &&
       Math.random() > 0.99
     ) {
-      grid[belowIndex] = factory(MaterialType.Tunnel)
-      grid[twoBelowIndex] = grid[index]
-      grid[index] = factory(MaterialType.Air)
+      grid.replaceWith(belowIndex, MaterialType.Tunnel)
+      grid.replaceWith(twoBelowIndex, grid.get(index))
+      grid.replaceWith(index, MaterialType.Air)
+
       this.diggingTunnel = true
       this.inTunnel = true
       return
     }
 
     if (this.diggingTunnel && this.inTunnel) {
-      const indices = indicesNextTo(index).filter(
+      const indices = Grid.indicesNextTo(index).filter(
         (i) =>
-          grid[i] instanceof Sand &&
-          around(i).every((i) => !(grid[i] instanceof Air))
+          grid.get(i) instanceof Sand &&
+          Grid.indicesAround(i).every((i) => !(grid.get(i) instanceof Air))
       )
       if (indices.length === 0) {
         this.diggingTunnel = false
         return
       }
       const random = randomFromArray(indices)
-      grid[random] = grid[index]
-      grid[index] = factory(MaterialType.Tunnel)
+      grid.replaceWith(random, index)
+      grid.replaceWith(index, MaterialType.Tunnel)
     }
 
     if (!this.diggingTunnel && this.inTunnel) {
-      const indices = around(index).filter(
-        (i) => grid[i] instanceof Tunnel || grid[i] instanceof Air
-      )
+      const indices = Grid.indicesAround(index).filter((i) => {
+        const element = grid.get(i)
+        return element instanceof Air || element instanceof Tunnel
+      })
       if (indices.length === 0) return
       const random = randomFromArray(indices)
-      if (grid[random] instanceof Air) {
-        grid[random] = grid[index]
-        grid[index] = factory(MaterialType.Tunnel)
+      if (grid.get(random) instanceof Air) {
+        grid.replaceWith(random, index)
+        grid.replaceWith(index, MaterialType.Tunnel)
         this.inTunnel = false
       } else {
-        swap(grid, index, random)
+        grid.swap(index, random)
       }
 
       return
     }
 
     const indices = [
-      left(index),
-      right(index),
-      upLeft(index),
-      upRight(index),
-      downLeft(index),
-      downRight(index)
-    ].filter((i) => grid[i] instanceof Air && !(grid[below(i)] instanceof Air))
+      Grid.leftIndex(index),
+      Grid.rightIndex(index),
+      Grid.upLeftIndex(index),
+      Grid.upRighIndex(index),
+      Grid.downLeftIndex(index),
+      Grid.downRightIndex(index)
+    ].filter(
+      (i) =>
+        grid.get(i) instanceof Air &&
+        !(grid.get(Grid.belowIndex(i)) instanceof Air)
+    )
 
     if (indices.length > 0) {
-      swap(grid, index, randomFromArray(indices))
+      grid.swap(index, randomFromArray(indices))
       return
     }
   }
@@ -123,11 +119,12 @@ export class Ant extends LivingBeing implements ThermallyConductive {
     return [242, 84, 89]
   }
 
-  receiveHeat(change: number, grid: Material[], currentIndex: number) {
+  receiveHeat(change: number, grid: Grid, currentIndex: number) {
     this.temperature += change
 
     if (this.temperature > 60) {
-      grid[currentIndex] = factory(
+      grid.replaceWith(
+        currentIndex,
         this.inTunnel ? MaterialType.Tunnel : MaterialType.Air
       )
     }

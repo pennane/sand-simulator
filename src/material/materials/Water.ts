@@ -1,11 +1,7 @@
-import {
-  Liquid,
-  Extinguisher,
-  ThermallyConductive,
-  Material
-} from '../Material'
-import { MaterialType, factory } from '../materialType'
+import { Liquid, Extinguisher, ThermallyConductive } from '../Material'
+import { MaterialType } from '../materialType'
 import { Color } from '../../types'
+import { Grid } from '../../grid/grid'
 
 export class Water extends Liquid implements Extinguisher, ThermallyConductive {
   public density: number = 10
@@ -16,10 +12,10 @@ export class Water extends Liquid implements Extinguisher, ThermallyConductive {
   suppressFire() {
     return 30
   }
-  receiveHeat(change: number, grid: Material[], currentPosition: number) {
+  receiveHeat(change: number, grid: Grid, currentPosition: number) {
     this.temperature += change
     if (this.temperature >= 100) {
-      grid[currentPosition] = factory(MaterialType.WaterVapor)
+      grid.replaceWith(currentPosition, MaterialType.WaterVapor)
     }
   }
 }

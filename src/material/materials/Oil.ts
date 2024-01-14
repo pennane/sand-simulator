@@ -1,6 +1,7 @@
-import { Liquid, ThermallyConductive, Material } from '../Material'
+import { Liquid, ThermallyConductive } from '../Material'
 import { MaterialType, factory } from '../materialType'
 import { Color } from '../../types'
+import { Grid } from '../../grid/grid'
 
 export class Oil extends Liquid implements ThermallyConductive {
   public density: number = 5
@@ -12,10 +13,10 @@ export class Oil extends Liquid implements ThermallyConductive {
   suppressFire() {
     return 10
   }
-  receiveHeat(change: number, grid: Material[], currentPosition: number) {
+  receiveHeat(change: number, grid: Grid, currentPosition: number) {
     this.temperature += change
     if (this.temperature >= 100) {
-      grid[currentPosition] = factory(MaterialType.Fire)
+      grid.replaceWith(currentPosition, MaterialType.Fire)
     }
   }
 }

@@ -1,4 +1,4 @@
-import { DEFAULT_DRAWING_ELEMENT, WIDTH } from './constants'
+import { DEFAULT_DRAWING_ELEMENT } from './constants'
 import {
   DEFAULT_BRUSH_SIZE,
   MAX_BRUSH_SIZE,
@@ -8,9 +8,8 @@ import {
   queueMaterial,
   queueFillAll
 } from './draw'
-import { toIndex } from './grid'
+import { Grid, WIDTH } from './grid/grid'
 import { MaterialType, factory } from './material/materialType'
-import { createDefaultGrid } from './state'
 import './style.css'
 
 const canvasContainer = document.getElementById('canvas-container')!
@@ -74,7 +73,7 @@ canvas.addEventListener('mousedown', (e) => {
   const pixelSize = canvas.offsetWidth / WIDTH
   const x = Math.floor(e.offsetX / pixelSize)
   const y = Math.floor(e.offsetY / pixelSize)
-  const index = toIndex({ x, y })
+  const index = Grid.toIndex({ x, y })
 
   queueMaterial(index, selectedMaterialType, brushSize)
 })
@@ -91,7 +90,7 @@ canvas.addEventListener('mousemove', (e) => {
   const pixelSize = canvas.offsetWidth / WIDTH
   const x = Math.floor(e.offsetX / pixelSize)
   const y = Math.floor(e.offsetY / pixelSize)
-  const index = toIndex({ x, y })
+  const index = Grid.toIndex({ x, y })
 
   queueMaterial(index, selectedMaterialType, brushSize)
 })
@@ -125,4 +124,4 @@ otherControls.appendChild(brushSizeInput)
 canvasContainer.appendChild(canvas)
 settingsContainer.appendChild(changeSelectedTypeContainer)
 settingsContainer.appendChild(otherControls)
-draw(createDefaultGrid())
+draw(new Grid(Grid.createDefaultGrid()))

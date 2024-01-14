@@ -1,7 +1,6 @@
 import { Material } from './material/Material'
-import { WIDTH, HEIGHT } from './constants'
-import { MaterialType, factory } from './material/materialType'
-import { nextState } from './state'
+import { MaterialType } from './material/materialType'
+import { Grid, HEIGHT, QueuedMaterial, WIDTH } from './grid/grid'
 
 export const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d', { willReadFrequently: true })!
@@ -12,11 +11,7 @@ export const DEFAULT_BRUSH_SIZE = 1
 
 let canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
 
-const queuedMaterials: Array<{
-  type: MaterialType
-  index: number | 'all'
-  brushSize?: number
-}> = []
+const queuedMaterials: QueuedMaterial[] = []
 
 canvas.width = WIDTH
 canvas.height = HEIGHT
@@ -32,63 +27,35 @@ const drawPixel = (index: number, type: Material) => {
   canvasData.data[rgbaIndex + 3] = 255
 }
 
-export const draw = (grid: Material[]) => {
+export const draw = (grid: Grid) => {
   canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
-  while (queuedMaterials.length > 0) {
-    const queued = queuedMaterials.shift()!
-    if (queued.index === 'all') {
-      grid = grid.map(() => factory(queued.type))
-    } else {
-      const brushSize = Math.max(
-        Math.min(queued.brushSize || DEFAULT_BRUSH_SIZE, MAX_BRUSH_SIZE),
-        MIN_BRUSH_SIZE
-      )
-      const indices = getIndicesForBrush(queued.index, brushSize)
-      for (const i of indices) {
-        grid[i] = factory(queued.type)
-      }
-    }
-  }
 
-  for (let i = 0; i < grid.length; i++) {
-    drawPixel(i, grid[i])
+  grid.addQueued(queuedMaterials)
+
+  for (let i = 0; i < grid.size(); i++) {
+    drawPixel(i, grid.get(i))
   }
 
   ctx.putImageData(canvasData, 0, 0)
-  const next = nextState(grid)
+  const next = grid.nextState()
   requestAnimationFrame(() => draw(next))
 }
+
+const parseBrushSize = (b: number | undefined) =>
+  Math.max(Math.min(b || DEFAULT_BRUSH_SIZE, MAX_BRUSH_SIZE), MIN_BRUSH_SIZE)
 
 export const queueMaterial = (
   index: number,
   type: MaterialType,
   brushSize?: number
 ) => {
-  queuedMaterials.push({ index, type, brushSize })
+  queuedMaterials.push({ index, type, brushSize: parseBrushSize(brushSize) })
 }
 
 export const queueFillAll = (type: MaterialType) => {
-  queuedMaterials.push({ index: 'all', type })
-}
-
-const getIndicesForBrush = (
-  centerIndex: number,
-  brushSize: number
-): number[] => {
-  if (brushSize <= 1) return [centerIndex]
-  const indices = []
-  const centerX = centerIndex % WIDTH
-  const centerY = Math.floor(centerIndex / WIDTH)
-
-  for (let x = -brushSize; x <= brushSize; x++) {
-    for (let y = -brushSize; y <= brushSize; y++) {
-      const newX = centerX + x
-      const newY = centerY + y
-      if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT) {
-        indices.push(newY * WIDTH + newX)
-      }
-    }
-  }
-
-  return indices
+  queuedMaterials.push({
+    index: 'all',
+    type,
+    brushSize: parseBrushSize(undefined)
+  })
 }

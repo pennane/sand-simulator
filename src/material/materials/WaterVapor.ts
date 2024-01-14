@@ -1,6 +1,7 @@
-import { Gas, Extinguisher, ThermallyConductive, Material } from '../Material'
-import { factory, MaterialType } from '../materialType'
+import { Gas, Extinguisher, ThermallyConductive } from '../Material'
+import { MaterialType } from '../materialType'
 import { Color } from '../../types'
+import { Grid } from '../../grid/grid'
 
 export class WaterVapor
   extends Gas
@@ -14,23 +15,19 @@ export class WaterVapor
     return 30
   }
 
-  next(grid: Material[], index: number): void {
+  next(grid: Grid, index: number): void {
     this.receiveHeat(-(Math.random() * 2), grid, index)
     if (this.temperature < 0) return
 
     super.next(grid, index)
   }
 
-  receiveHeat(
-    temperatureChange: number,
-    grid: Material[],
-    currentIndex: number
-  ) {
+  receiveHeat(temperatureChange: number, grid: Grid, currentIndex: number) {
     this.temperature += temperatureChange
     if (this.temperature > 200) {
       this.temperature = 200
     } else if (this.temperature < 0) {
-      grid[currentIndex] = factory(MaterialType.Water)
+      grid.replaceWith(currentIndex, MaterialType.Water)
       return
     }
   }
