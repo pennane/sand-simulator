@@ -12,6 +12,7 @@ import { Air } from './Air'
 
 export class Lava extends Liquid {
   public density: number = 20
+  public fluidity: number = 1
   color(): Color {
     return [200, 50, 50]
   }
