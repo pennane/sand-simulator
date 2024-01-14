@@ -1,4 +1,9 @@
-import { MovableSolid, ImmovableSolid } from '../Material'
+import {
+  MovableSolid,
+  ImmovableSolid,
+  Material,
+  isThermallyConductive
+} from '../Material'
 
 import { MaterialType } from '../materialType'
 import { Color } from '../../types'
@@ -23,6 +28,11 @@ export class Bomb extends MovableSolid {
       indicesToBlow.add(index)
     }
     for (const index of indicesToBlow.values()) {
+      const element = grid.get(index)
+      if (isThermallyConductive(element)) {
+        element.receiveHeat(1000, grid, index)
+        continue
+      }
       grid.replaceWith(index, MaterialType.Fire)
     }
   }
