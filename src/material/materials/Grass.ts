@@ -19,6 +19,10 @@ export class Grass extends MovableSolid implements ThermallyConductive {
 
   next(grid: Grid, index: number): void {
     const [aboveIndex, aboveElement] = grid.above(index)
+    if (!(aboveElement instanceof Air) && Math.random() > 0.99) {
+      grid.replaceWith(index, MaterialType.Dirt)
+      return
+    }
     const [_, belowElement] = grid.below(index)
     const around = grid.around(index)
     if (

@@ -32,7 +32,7 @@ export abstract class Material {
 }
 
 export abstract class ImmovableSolid extends Material {
-  next(grid: Grid, index: number) {}
+  next(_grid: Grid, _index: number) {}
 }
 
 export abstract class MovableSolid extends Material {

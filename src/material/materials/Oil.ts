@@ -1,5 +1,5 @@
 import { Liquid, ThermallyConductive } from '../Material'
-import { MaterialType, factory } from '../materialType'
+import { MaterialType } from '../materialType'
 import { Color } from '../../types'
 import { Grid } from '../../grid/grid'
 
