@@ -15,7 +15,10 @@ export class Wood extends ImmovableSolid implements ThermallyConductive {
   receiveHeat(temperatureChange: number, grid: Grid, currentIndex: number) {
     this.temperature += temperatureChange
     if (this.temperature > 100) {
-      grid.replaceWith(currentIndex, MaterialType.Fire)
+      grid.replaceWith(
+        currentIndex,
+        Math.random() > 0.3 ? MaterialType.Fire : MaterialType.Air
+      )
     }
   }
 
