@@ -1,7 +1,8 @@
 import {
   MovableSolid,
   ImmovableSolid,
-  isThermallyConductive
+  isThermallyConductive,
+  Gas
 } from '../Material'
 
 import { MaterialType } from '../materialType'
@@ -43,7 +44,7 @@ export class Bomb extends MovableSolid {
   next(grid: Grid, index: number): void {
     const [_, belowElement] = grid.below(index)
 
-    if (belowElement instanceof Air) {
+    if (belowElement instanceof Air || belowElement instanceof Gas) {
       this.fallLastFrame = true
     } else {
       if (this.fallLastFrame && !(belowElement instanceof Bomb)) {
